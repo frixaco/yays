@@ -1,29 +1,32 @@
-import { writeFileSync } from "fs";
+import fs from "fs";
+import path from "path";
+import Groq from "groq-sdk";
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
-const GROQ_API_URL = "https://api.groq.com/v1/audio/transcriptions";
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
 
 export async function transcribeVideo(
   videoPath: string,
   outputPath: string
 ): Promise<void> {
-  const file = Bun.file(videoPath);
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("model", "distil-whisper");
+  console.log("Transcribing video...", videoPath, " to ", outputPath);
 
-  const response = await fetch(GROQ_API_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${GROQ_API_KEY}`,
-    },
-    body: formData,
-  });
+  const absoluteVideoPath = path.resolve(videoPath);
 
-  if (!response.ok) {
-    throw new Error(`Transcription failed: ${response.statusText}`);
+  if (!fs.existsSync(absoluteVideoPath)) {
+    throw new Error(`File not found: ${absoluteVideoPath}`);
   }
 
-  const result = await response.json();
-  writeFileSync(outputPath, result.text);
+  const transcription = await groq.audio.transcriptions.create({
+    file: fs.createReadStream(absoluteVideoPath),
+    model: "distil-whisper-large-v3-en",
+    response_format: "json",
+    language: "en",
+  });
+
+  console.log("Transcription completed successfully");
+
+  fs.writeFileSync(outputPath, transcription.text);
+  console.log("Transcription saved to:", outputPath);
 }

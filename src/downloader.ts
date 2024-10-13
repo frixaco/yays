@@ -1,34 +1,44 @@
-import { YtDlp } from "@yemreak/yt-dlp";
+import { existsSync } from "fs";
+import { promisify } from "util";
+import { exec } from "child_process";
+import path from "path";
 
-const ytDlp = new YtDlp({ workdir: "./tmp" });
+const execAsync = promisify(exec);
 
 export async function downloadVideo(url: string): Promise<string> {
   try {
-    await ytDlp.downloadLatestReleaseIfNotExists();
+    console.log("Getting audio info...");
+    const { stdout: infoOutput } = await execAsync(`yt-dlp -j "${url}"`);
+    const audioInfo = JSON.parse(infoOutput);
 
-    const videoUrls = await ytDlp.downloadAudio({
-      url,
-      format: "ba", // best audio
-      outputPath: "./tmp",
-    });
+    const audioTitle = audioInfo.title
+      .replace(/[^\w\s-]/gi, "")
+      .trim()
+      .replace(/\s+/g, "_");
+    console.log(`Audio title: ${audioTitle}`);
+    const outputTemplate = `${audioTitle}.%(ext)s`;
 
-    // The output should contain the filename of the downloaded audio
-    const filename = videoUrls[0].match(
-      /\[ffmpeg\] Destination: (.+\.mp3)/
-    )?.[1];
+    const expectedFilePath = path.resolve(`${audioTitle}.mp3`);
 
-    if (!filename) {
-      throw new Error("Could not extract filename from yt-dlp output");
+    if (existsSync(expectedFilePath)) {
+      console.log(`Audio file already exists: ${expectedFilePath}`);
+      return expectedFilePath;
     }
 
-    // const subtitleText = await ytDlp.downloadSubtitleText({
-    //   info: mediaInfo[0],
-    //   lang: "en",
-    // });
+    console.log("Downloading audio...");
+    const { stdout: downloadOutput } = await execAsync(
+      `yt-dlp -f "bestaudio" -x --audio-format mp3 --audio-quality 0 -o "${outputTemplate}" "${url}"`
+    );
+    console.log(downloadOutput);
 
-    return filename;
+    if (!existsSync(expectedFilePath)) {
+      throw new Error(`Downloaded file not found: ${expectedFilePath}`);
+    }
+
+    console.log(`Audio downloaded: ${expectedFilePath}`);
+    return expectedFilePath;
   } catch (error) {
-    console.error("Error downloading video:", error);
+    console.error("Error downloading audio:", error);
     throw error;
   }
 }

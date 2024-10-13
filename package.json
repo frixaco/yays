@@ -10,7 +10,8 @@
   "dependencies": {
     "@yemreak/yt-dlp": "^1.0.2",
     "openai": "^4.67.3",
-    "@anthropic-ai/sdk": "^0.29.0"
+    "@anthropic-ai/sdk": "^0.29.0",
+    "groq-sdk": "^0.7.0"
   },
   "devDependencies": {
     "bun-types": "latest"
