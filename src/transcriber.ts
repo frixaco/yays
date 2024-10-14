@@ -20,9 +20,10 @@ export async function transcribeVideo(
 
   const transcription = await groq.audio.transcriptions.create({
     file: fs.createReadStream(absoluteVideoPath),
-    model: "distil-whisper-large-v3-en",
+    // model: "distil-whisper-large-v3-en",
+    model: "whisper-large-v3-turbo",
     response_format: "json",
-    language: "en",
+    language: "ru",
   });
 
   console.log("Transcription completed successfully");

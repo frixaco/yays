@@ -1,4 +1,6 @@
-## Simple CLI app to transcribe YouTube videos using Groq's Distill-Whisper and summarize them using Anthropic's Claude 3.5 Sonnet
+## Yet Another YouTube Summarizer
+
+A simple CLI app to transcribe YouTube videos using Groq's Distill-Whisper and summarize them using Anthropic's Claude 3.5 Sonnet
 
 ## Requirements
 
