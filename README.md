@@ -11,7 +11,7 @@ A simple CLI app to transcribe YouTube videos using Groq's Distill-Whisper and s
 
 ```bash
 bun install
-bun start
+bun start -- "<youtube video url>"
 ```
 
 Generates two types of files for each processed video:
