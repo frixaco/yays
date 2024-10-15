@@ -30,5 +30,5 @@ Example output files included:
 
 ## TODO
 
-- [ ] Play around with different prompt and see which I like better
+- [ ] Play around with different prompt and see which I like better, which are cheaper, etc.
 - [ ] Try different models for transcription and summarization
