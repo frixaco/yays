@@ -4,6 +4,8 @@ import { summarizeTranscriptionAndSave } from "./summarizer";
 import { readFileSync } from "fs";
 import { basename, extname } from "path";
 
+const PLATFORM: "GROQ" | "GEMINI" = "GROQ";
+
 async function main() {
   const videoUrl = Bun.argv[2];
   if (!videoUrl) {
@@ -12,15 +14,19 @@ async function main() {
   }
 
   const videoPath = await downloadVideo(videoUrl);
-
   const videoTitle = basename(videoPath, extname(videoPath));
   const transcriptionPath = `${videoTitle}.md`;
-  await transcribeWithGroq(videoPath, transcriptionPath);
-  // await transcribeWithGemini(videoPath, transcriptionPath);
-
-  const transcriptionText = readFileSync(transcriptionPath, "utf-8");
   const summaryPath = `summary_${videoTitle}.md`;
-  await summarizeTranscriptionAndSave(transcriptionText, summaryPath);
+
+  if (PLATFORM === "GROQ") {
+    await transcribeWithGroq(videoPath, transcriptionPath);
+    const transcriptionText = readFileSync(transcriptionPath, "utf-8");
+    await summarizeTranscriptionAndSave(transcriptionText, summaryPath);
+  }
+
+  if (PLATFORM === "GEMINI") {
+    await transcribeWithGemini(videoPath, transcriptionPath, summaryPath);
+  }
 
   // unlinkSync(videoPath);
   console.log("Video file deleted");

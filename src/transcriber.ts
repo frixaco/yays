@@ -37,7 +37,8 @@ export async function transcribeWithGroq(
 
 export async function transcribeWithGemini(
   videoPath: string,
-  outputPath: string
+  outputPath: string,
+  summaryPath: string
 ): Promise<void> {
   // const files = (await fileManager.listFiles()).files;
   // for await (const file of files) {
@@ -73,8 +74,8 @@ export async function transcribeWithGemini(
   );
 
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-  const result = await model.generateContent([
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-002" });
+  const transcription = await model.generateContent([
     "Generate a transcript of the speech.",
     {
       fileData: {
@@ -86,6 +87,21 @@ export async function transcribeWithGemini(
 
   console.log("Transcription completed successfully");
 
-  writeFileSync(outputPath, result.response.text());
+  writeFileSync(outputPath, transcription.response.text());
   console.log("Transcription saved to:", outputPath);
+
+  const summary = await model.generateContent([
+    `Please provide detailed comprehensive summary for the audio.`,
+    {
+      fileData: {
+        fileUri: uploadResult.file.uri,
+        mimeType: uploadResult.file.mimeType,
+      },
+    },
+  ]);
+
+  console.log("Summary completed successfully");
+
+  writeFileSync(summaryPath, summary.response.text());
+  console.log("Summary saved to:", summaryPath);
 }
