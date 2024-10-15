@@ -1,7 +1,7 @@
 import { downloadVideo } from "./downloader";
-import { transcribeVideo } from "./transcriber";
-import { summarizeText } from "./summarizer";
-import { readFileSync, unlinkSync } from "fs";
+import { transcribeWithGemini, transcribeWithGroq } from "./transcriber";
+import { summarizeTranscriptionAndSave } from "./summarizer";
+import { readFileSync } from "fs";
 import { basename, extname } from "path";
 
 async function main() {
@@ -11,25 +11,19 @@ async function main() {
     process.exit(1);
   }
 
-  try {
-    const videoPath = await downloadVideo(videoUrl);
-    console.log(`Video downloaded: ${videoPath}`);
+  const videoPath = await downloadVideo(videoUrl);
 
-    const videoTitle = basename(videoPath, extname(videoPath));
-    const transcriptionPath = `${videoTitle}.md`;
-    await transcribeVideo(videoPath, transcriptionPath);
-    console.log(`Video transcribed: ${transcriptionPath}`);
+  const videoTitle = basename(videoPath, extname(videoPath));
+  const transcriptionPath = `${videoTitle}.md`;
+  await transcribeWithGroq(videoPath, transcriptionPath);
+  // await transcribeWithGemini(videoPath, transcriptionPath);
 
-    const transcriptionText = readFileSync(transcriptionPath, "utf-8");
-    const summaryPath = `summary_${videoTitle}.md`;
-    await summarizeText(transcriptionText, summaryPath);
-    console.log(`Summary generated: ${summaryPath}`);
+  const transcriptionText = readFileSync(transcriptionPath, "utf-8");
+  const summaryPath = `summary_${videoTitle}.md`;
+  await summarizeTranscriptionAndSave(transcriptionText, summaryPath);
 
-    unlinkSync(videoPath);
-    console.log("Video file deleted");
-  } catch (error) {
-    console.error("An error occurred:", error);
-  }
+  // unlinkSync(videoPath);
+  console.log("Video file deleted");
 }
 
 main();

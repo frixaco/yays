@@ -8,10 +8,11 @@
     "start": "bun run src/index.ts"
   },
   "dependencies": {
-    "@yemreak/yt-dlp": "^1.0.2",
-    "openai": "^4.67.3",
     "@anthropic-ai/sdk": "^0.29.0",
-    "groq-sdk": "^0.7.0"
+    "@google/generative-ai": "^0.21.0",
+    "@yemreak/yt-dlp": "^1.0.2",
+    "groq-sdk": "^0.7.0",
+    "openai": "^4.67.3"
   },
   "devDependencies": {
     "bun-types": "latest"

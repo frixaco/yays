@@ -3,7 +3,7 @@ import { writeFileSync } from "fs";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-export async function summarizeText(
+export async function summarizeTranscriptionAndSave(
   text: string,
   outputPath: string
 ): Promise<void> {
@@ -55,4 +55,5 @@ export async function summarizeText(
       ? finalResponse.content[0].text
       : ""
   );
+  console.log(`Summary generated: ${outputPath}`);
 }
