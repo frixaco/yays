@@ -1,34 +1,36 @@
-## Yet Another YouTube Summarizer
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-A simple CLI app to transcribe YouTube videos using Groq's Distill-Whisper and summarize them using Anthropic's Claude 3.5 Sonnet
+## Getting Started
 
-## Requirements
-
-- [Bun](https://bun.sh)
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp)
-
-### Usage
+First, run the development server:
 
 ```bash
-bun install
-bun start -- "<youtube video url>"
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-Generates two types of files for each processed video:
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-1. `<video_title>.md`: Contains the full transcription of the video.
-2. `summary_<video_title>.md`: Provides a summary of the transcribed video content.
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-## Example
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-Example output files included:
+## Learn More
 
-1. YouTube shorts, Dr. K and Mizkif
+To learn more about Next.js, take a look at the following resources:
 
-- [summary_Your_Thoughts_Are_Not_You_Mizkif.md](./summary_Your_Thoughts_Are_Not_You_Mizkif.md)
-- [Your_Thoughts_Are_Not_You_Mizkif.md](./Your_Thoughts_Are_Not_You_Mizkif.md)
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-## TODO
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-- [ ] Play around with different prompt and see which I like better, which are cheaper, etc.
-- [ ] Try different models for transcription and summarization
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
