@@ -1,4 +1,6 @@
-import { readFileSync, writeFileSync, existsSync, createReadStream } from "fs";
+"use server";
+
+import { writeFileSync, existsSync, createReadStream } from "fs";
 import { basename, extname } from "path";
 import path from "path";
 import Groq from "groq-sdk";
@@ -218,30 +220,24 @@ export async function downloadVideo(url: string): Promise<string> {
 }
 
 // =================== MAIN ===================
-async function main() {
-  const videoUrl = Bun.argv[2];
-  if (!videoUrl) {
-    console.error("Please provide a YouTube video URL as an argument.");
-    process.exit(1);
-  }
+export async function handleVideo(formData: FormData) {
+  const videoUrl = formData.get("videoUrl") as string;
 
   const videoPath = await downloadVideo(videoUrl);
   const videoTitle = basename(videoPath, extname(videoPath));
   const transcriptionPath = `${videoTitle}.md`;
-  const summaryPath = `summary_${videoTitle}.md`;
+  //   const summaryPath = `summary_${videoTitle}.md`;
 
   if (PLATFORM === "GROQ") {
     await transcribeWithGroq(videoPath, transcriptionPath);
-    const transcriptionText = readFileSync(transcriptionPath, "utf-8");
-    await summarizeTranscriptionAndSave(transcriptionText, summaryPath);
+    // const transcriptionText = readFileSync(transcriptionPath, "utf-8");
+    // await summarizeTranscriptionAndSave(transcriptionText, summaryPath);
   }
 
-  if (PLATFORM === "GEMINI") {
-    await transcribeWithGemini(videoPath, transcriptionPath, summaryPath);
-  }
+  //   if (PLATFORM === "GEMINI") {
+  //     await transcribeWithGemini(videoPath, transcriptionPath, summaryPath);
+  //   }
 
-  // unlinkSync(videoPath);
+  //   unlinkSync(videoPath);
   console.log("Video file deleted");
 }
-
-main();
