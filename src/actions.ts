@@ -1,16 +1,39 @@
-"use server";
+// "use server";
 
-import { writeFileSync, existsSync, createReadStream } from "fs";
+import { writeFileSync, existsSync, createReadStream, readFileSync } from "fs";
 import { basename, extname } from "path";
 import path from "path";
 import Groq from "groq-sdk";
-import { FileState, GoogleAIFileManager } from "@google/generative-ai/server";
+import {
+  FileState,
+  GoogleAIFileManager,
+  UploadFileResponse,
+} from "@google/generative-ai/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { promisify } from "util";
 import { exec } from "child_process";
 import Anthropic from "@anthropic-ai/sdk";
+import { readdir } from "fs/promises";
 
 const PLATFORM: "GROQ" | "GEMINI" = "GROQ";
+
+const files = await readdir("../blender-playlist-mp3");
+console.log(files.map((file) => path.resolve("../blender-playlist-mp3", file)));
+console.log(files.map((file) => file.replace(".mp3", ".md")));
+
+for (const file of files) {
+  const audioPath = path.resolve("../blender-playlist-mp3", file);
+  const outputPath = file.replace(".mp3", ".md");
+  // const summaryPath = "summary_" + file.replace(".mp3", ".md");
+
+  if (existsSync(outputPath)) {
+    console.log(`Transcription already exists: ${outputPath}`);
+    continue;
+  }
+
+  // await transcribeWithGroq(audioPath, outputPath);
+  await transcribeWithGemini(audioPath, outputPath);
+}
 
 // =================== TRANSCRIPTION ===================
 
@@ -19,19 +42,17 @@ const groq = new Groq({
 });
 
 async function transcribeWithGroq(
-  videoPath: string,
+  audioPath: string,
   outputPath: string
 ): Promise<void> {
-  console.log("Transcribing audio...", videoPath, " to ", outputPath);
+  console.log("Transcribing audio...", audioPath, " to ", outputPath);
 
-  const absoluteVideoPath = path.resolve(videoPath);
-
-  if (!existsSync(absoluteVideoPath)) {
-    throw new Error(`File not found: ${absoluteVideoPath}`);
+  if (!existsSync(audioPath)) {
+    throw new Error(`File not found: ${audioPath}`);
   }
 
   const transcription = await groq.audio.transcriptions.create({
-    file: createReadStream(absoluteVideoPath),
+    file: createReadStream(audioPath),
     model: "distil-whisper-large-v3-en", // 13% error rate
     // model: "whisper-large-v3", // 10% error rate
     // model: "whisper-large-v3-turbo	", // 12$ error rate
@@ -45,27 +66,21 @@ async function transcribeWithGroq(
   console.log("Transcription saved to:", outputPath);
 }
 
+async function cleanUpFilesInGemini() {
+  const fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY!);
+  const files = (await fileManager.listFiles()).files;
+  for await (const file of files) {
+    await fileManager.deleteFile(file.name);
+  }
+  console.log(await fileManager.listFiles());
+}
+
+// TODO: Add retry logic since Gemini sometimes fails to process the file
 async function transcribeWithGemini(
   videoPath: string,
-  outputPath: string,
-  summaryPath: string
-): Promise<void> {
-  // Uncomment to delete all files
-  // const fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY!);
-  // const files = (await fileManager.listFiles()).files;
-  // for await (const file of files) {
-  //   await fileManager.deleteFile(file.name);
-  // }
-  // console.log(await fileManager.listFiles());
-  // return;
-
+  outputPath: string
+): Promise<UploadFileResponse> {
   console.log("Transcribing audio...", videoPath, " to ", outputPath);
-
-  const absoluteVideoPath = path.resolve(videoPath);
-
-  if (!existsSync(absoluteVideoPath)) {
-    throw new Error(`File not found: ${absoluteVideoPath}`);
-  }
 
   const fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY!);
   const uploadResult = await fileManager.uploadFile(videoPath, {
@@ -86,9 +101,9 @@ async function transcribeWithGemini(
   );
 
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-002" });
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
   const transcription = await model.generateContent([
-    "Generate a transcript of the speech.",
+    "Generate accurate transcript for the audio. For context, it's from Blender 3D modeling playlist.",
     {
       fileData: {
         fileUri: uploadResult.file.uri,
@@ -102,6 +117,17 @@ async function transcribeWithGemini(
   writeFileSync(outputPath, transcription.response.text());
   console.log("Transcription saved to:", outputPath);
 
+  return uploadResult;
+}
+
+// =================== SUMMARIZATION ===================
+async function summarizeWithGemini(
+  uploadResult: UploadFileResponse,
+  summaryPath: string
+): Promise<void> {
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
   const summary = await model.generateContent([
     `Please provide detailed comprehensive summary for the audio.`,
     {
@@ -111,15 +137,12 @@ async function transcribeWithGemini(
       },
     },
   ]);
-
   console.log("Summary completed successfully");
-
   writeFileSync(summaryPath, summary.response.text());
   console.log("Summary saved to:", summaryPath);
 }
 
-// =================== SUMMARIZATION ===================
-async function summarizeTranscriptionAndSave(
+async function summarizeWithAnthropic(
   text: string,
   outputPath: string
 ): Promise<void> {
@@ -185,6 +208,7 @@ function decodeUnicode(str: string): string {
   );
 }
 
+// Playlist download: yt-dlp -x --audio-format mp3 "https://www.youtube.com/playlist?list=PLvgIVNDU-Dxi5h3JLNJMfK0t3-WsBm6Av"
 export async function downloadVideo(url: string): Promise<string> {
   console.log("Getting audio info...");
   const { stdout: infoOutput } = await execAsync(`yt-dlp -j "${url}"`);
@@ -226,18 +250,34 @@ export async function handleVideo(formData: FormData) {
   const videoPath = await downloadVideo(videoUrl);
   const videoTitle = basename(videoPath, extname(videoPath));
   const transcriptionPath = `${videoTitle}.md`;
-  //   const summaryPath = `summary_${videoTitle}.md`;
+  const summaryPath = `summary_${videoTitle}.md`;
 
   if (PLATFORM === "GROQ") {
     await transcribeWithGroq(videoPath, transcriptionPath);
-    // const transcriptionText = readFileSync(transcriptionPath, "utf-8");
-    // await summarizeTranscriptionAndSave(transcriptionText, summaryPath);
+    const transcriptionText = readFileSync(transcriptionPath, "utf-8");
+    await summarizeWithAnthropic(transcriptionText, summaryPath);
   }
 
-  //   if (PLATFORM === "GEMINI") {
-  //     await transcribeWithGemini(videoPath, transcriptionPath, summaryPath);
-  //   }
+  if (PLATFORM === "GEMINI") {
+    const uploadResult = await transcribeWithGemini(
+      videoPath,
+      transcriptionPath
+    );
+    await summarizeWithGemini(uploadResult, summaryPath);
+  }
 
-  //   unlinkSync(videoPath);
-  console.log("Video file deleted");
+  // unlinkSync(videoPath);
+  // console.log("Video file deleted");
+
+  console.log("Done!");
 }
+
+// =================== RAG ===================
+
+import { ChromaClient } from "chromadb";
+
+const client = new ChromaClient();
+
+const collection = await client.createCollection({
+  name: "",
+});
