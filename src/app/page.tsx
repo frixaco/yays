@@ -1,13 +1,7 @@
-import { handleVideo } from "../actions";
-
-export default function Home() {
+export default async function Home() {
   return (
-    <div>
+    <div className="bg-red-500 text-white">
       <h1>Hello World</h1>
-      <form action={handleVideo}>
-        <input type="text" name="videoUrl" />
-        <button type="submit">Submit</button>
-      </form>
     </div>
   );
 }
