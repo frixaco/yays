@@ -1,10 +1,14 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { handleTranscriptUpload } from "@/actions";
 
 export function UploadTranscriptsButton() {
-  return (
-    <Button onClick={() => handleTranscriptUpload()}>Upload Transcripts</Button>
-  );
+  const uploadTranscripts = async () => {
+    const response = await fetch("/api/pinecone", {
+      method: "POST",
+    });
+    console.log(response);
+  };
+
+  return <Button onClick={uploadTranscripts}>Upload Transcripts</Button>;
 }
