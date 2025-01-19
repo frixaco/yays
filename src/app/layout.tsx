@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -35,7 +36,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <div className="flex h-screen flex-col items-stretch justify-start gap-8 p-4">
+            <ThemeToggle />
+            {children}
+          </div>
         </ThemeProvider>
       </body>
     </html>
