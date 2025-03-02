@@ -228,7 +228,7 @@ export default function Home() {
       </motion.aside>
 
       {/* Main Content */}
-      <main className="flex flex-grow flex-col">
+      <main className="flex grow flex-col">
         <div className="flex items-center justify-between border-b border-zinc-800 p-4">
           <Button
             variant="ghost"
@@ -262,7 +262,7 @@ export default function Home() {
             {isRightDrawerOpen ? "Close" : "Open"} Profile
           </Button>
         </div>
-        <ScrollArea className="flex-grow p-4">
+        <ScrollArea className="grow p-4">
           <div className="mx-auto max-w-2xl space-y-4">
             <div className="max-w-[80%] border border-zinc-800 bg-[#111111] p-4">
               <p className="mb-2 text-xs text-zinc-400">AI Assistant</p>
