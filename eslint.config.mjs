@@ -13,7 +13,7 @@ const compat = new FlatCompat({
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   ...compat.plugins("prettier-plugin-tailwindcss"),
-  ...tailwind.configs["flat/recommended"]
+  ...tailwind.configs["flat/recommended"],
 ];
 
 export default eslintConfig;
